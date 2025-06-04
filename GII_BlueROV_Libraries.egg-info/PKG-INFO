@@ -1,0 +1,21 @@
+Metadata-Version: 2.1
+Name: GII-BlueROV-Libraries
+Version: 0.1
+Summary: Custom Library for GII BlueROV
+Home-page: UNKNOWN
+Author: GII
+License: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+
+
+```bash
+pip install -e .
+```
+
+```bash
+from lib import gii_bluerov
+from lib.blueROV_config import get_config
+
+

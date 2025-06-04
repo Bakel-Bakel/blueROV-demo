@@ -1,0 +1,10 @@
+README.md
+setup.py
+GII_BlueROV_Libraries.egg-info/PKG-INFO
+GII_BlueROV_Libraries.egg-info/SOURCES.txt
+GII_BlueROV_Libraries.egg-info/dependency_links.txt
+GII_BlueROV_Libraries.egg-info/requires.txt
+GII_BlueROV_Libraries.egg-info/top_level.txt
+gii/__init__.py
+gii/blueROV_config.py
+gii/gii_bluerov.py
