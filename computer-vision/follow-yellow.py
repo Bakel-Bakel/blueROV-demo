@@ -76,7 +76,7 @@ dt = 0.1      # Time step in seconds
 Kp_dist = 0.5
 Ki_dist = 0.1
 Kd_dist = 0.05
-distance_setpoint = 0.1  # Desired distance in meters (10cm)
+distance_setpoint = 0.5  # Desired distance in meters (10cm)
 distance_dt = 0.1
 
 # PID Variables for depth
@@ -113,8 +113,6 @@ def gst_to_opencv(sample):
         ),
         buffer=buf.extract_dup(0, buf.get_size()), dtype=np.uint8)
     return array
-
-
 
 def calculate_distance(area):
     """Calculate distance based on area using the given formula"""
@@ -218,22 +216,6 @@ def compute_distance_control(current_distance):
     output = max(min(output, 100), -100)
     return round(output)
 
-def compute_centering_error(yellow_center, frame):
-    """Compute the error between yellow center and camera center"""
-    # Get frame dimensions
-    frame_width = frame.shape[1]
-    frame_height = frame.shape[0]
-    
-    # Calculate camera center
-    camera_center_x = frame_width // 2
-    camera_center_y = frame_height // 2
-    
-    # Calculate error (positive means yellow is to the right/below center)
-    error_x = yellow_center[0] - camera_center_x
-    error_y = yellow_center[1] - camera_center_y
-    
-    return error_x, error_y
-
 def main():
     try:
         while True:
@@ -241,69 +223,32 @@ def main():
             sample = video_sink.emit('pull-sample')
             if sample:
                 frame = gst_to_opencv(sample)
+                
+                # Detect yellow color and get distance
+                yellow_center, yellow_area, current_distance = detect_yellow_color(frame)
+                
                 # Get current depth
                 current_depth = autopilot.location.global_relative_frame.alt
                 
                 # Compute depth control
                 depth_control = compute_depth_control(current_depth)
+                
                 # Apply depth control
                 gii_bluerov.move_rov(autopilot, "z", "displacement", depth_control)
-                # Print status
-                print(f"Depth: {current_depth:.3f}m | Depth Control: {depth_control:.3f}")
-                sleep(0.1)
-
-                
-                # Detect yellow color and get distance
-                '''yellow_center, yellow_area, current_distance = detect_yellow_color(frame)
-                print(f"Yellow area: {yellow_area}")
-                target = False
-                if yellow_area > 50000:
-                    target = True
-                    while target:
-                        depth_control = compute_depth_control(current_depth)
-                        gii_bluerov.move_rov(autopilot, "z", "displacement", depth_control)
-                        gii_bluerov.move_rov(autopilot, "x", "displacement", 0)
-                        time.sleep(3)
-                        gii_bluerov.open_gripper_rov(autopilot)
-                        time.sleep(1)
-                        gii_bluerov.stop_gripper_rov(autopilot)
-                        time.sleep(5.0)
-                        gii_bluerov.close_gripper_rov(autopilot)
-                        time.sleep(3.2) 
-                        target = False
-                        break
-                    break
-
-                
-                
-
-                settle = False
-                start_time = time.time()
-                while not settle or time.time() - start_time < 5:
-                    print("settling")
-                    depth_control = compute_depth_control(current_depth)
-                    gii_bluerov.move_rov(autopilot, "z", "displacement", depth_control)
-                    settle = True
-                
-                
-                
                 
                 # If yellow is detected, control distance
                 if yellow_center is not None:
-                    error_x, error_y = compute_centering_error(yellow_center, frame)
                     distance_control = compute_distance_control(current_distance)
-                    move_y = int(error_x * 0.1)
-                    move_y = max(min(move_y, 100), -100)
                     # Use x-axis for forward/backward movement
                     gii_bluerov.move_rov(autopilot, "x", "displacement", distance_control)
-                    #gii_bluerov.move_rov(autopilot, "y", "displacement", move_y)
                 else:
                     # Stop forward/backward movement if no yellow detected
                     gii_bluerov.move_rov(autopilot, "x", "displacement", 0)
                 
-                
+                # Print status
+                print(f"Depth: {current_depth:.3f}m | Depth Control: {depth_control:.3f}")
                 if yellow_center:
-                    print(f"Distance: {current_distance:.3f}m | Distance Control: {distance_control:.3f}")
+                    print(f"Distance: {current_distance:.3f}cm | Distance Control: {distance_control:.3f}")
                 
                 # Display frame
                 cv2.imshow('Frame', frame)
@@ -311,7 +256,7 @@ def main():
                 # Break loop on 'q' press
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
-                '''
+                
             sleep(0.1)  # Small delay to prevent CPU overload
             
     except KeyboardInterrupt:
