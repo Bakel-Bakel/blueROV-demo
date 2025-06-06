@@ -51,8 +51,8 @@ print("Mode:", autopilot.mode.name)
 print("Altitude:", autopilot.location.global_relative_frame.alt)
 
 # === Movement ===
-gii_bluerov.move_rov(autopilot, "x", "displacement", 15)
-sleep(5)
+#gii_bluerov.move_rov(autopilot, "x", "displacement", 15)
+#sleep(5)
 #gii_bluerov.move_rov(autopilot, "z", "displacement", -15)
 #sleep(20)
 #print("Altitude:", autopilot.location.global_relative_frame.alt)
