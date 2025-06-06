@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# script example to operate the bluerow using python
+
 
 
 import dronekit
@@ -178,7 +178,7 @@ def detect_yellow_color(frame):
         # Display total area and distance at the top of the frame
         cv2.putText(frame, f"Total Area: {int(total_area)}", (10, 30),
                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-        cv2.putText(frame, f"Distance: {distance:.2f}m", (10, 70),
+        cv2.putText(frame, f"Distance: {distance:.2f}mm", (10, 70),
                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         
         return weighted_center, total_area, distance
