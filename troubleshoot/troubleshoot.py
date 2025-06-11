@@ -58,14 +58,16 @@ print("Altitude:", autopilot.location.global_relative_frame.alt)
 #print("Altitude:", autopilot.location.global_relative_frame.alt)
 
 # === Gripper control ===
-if config.get("gripper"):
+'''if config.get("gripper"):
     gii_bluerov.open_gripper_rov(autopilot)
     sleep(1)
     gii_bluerov.stop_gripper_rov(autopilot)
     sleep(5.0)
     gii_bluerov.close_gripper_rov(autopilot)
     sleep(3.2)
-
+'''
+gii_bluerov.move_rov(autopilot, "z", "rotation", 20)
+sleep(7)
 # === Stop and disarm ===
 gii_bluerov.stop_rov(autopilot)
 
