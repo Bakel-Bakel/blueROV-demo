@@ -10,7 +10,7 @@ ROV_NAME = "bluerov2"  # Change to "bluerov1" as needed
 config = get_config(ROV_NAME)
 
 # === Build connection string, DO NOT TOUCH ===
-connection_string = f"{config['rov_ip']}:{config['port']}"
+connection_string = f"{config['host_ip']}:{config['port']}"
 print(f"Connecting to vehicle on: {connection_string}")
 autopilot = connect(connection_string, wait_ready=False)
 
@@ -24,8 +24,8 @@ print("Armed:", autopilot.armed)
 print("Altitude:", autopilot.location.global_relative_frame.alt)
 
 # === Movement ===
-gii_bluerov.move_rov(autopilot, "x", "displacement", -15)
-sleep(10)
+gii_bluerov.move_rov(autopilot, "x", "displacement", 15)
+sleep(5)
 
 # gii_bluerov.move_rov(autopilot, "z", "displacement", -15)
 # sleep(20)
