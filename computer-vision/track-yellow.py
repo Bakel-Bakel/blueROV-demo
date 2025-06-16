@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+#import necessary libraries
 import dronekit
 import time
 import cv2
@@ -10,18 +11,23 @@ from time import sleep
 import gii.gii_bluerov as gii_bluerov
 from gii.blueROV_config import get_config 
 
+#needed for video from the rov
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 
 # Initialize GStreamer
 Gst.init(None)
 
-# Patch mode availability check
+# Patch mode availability check 
+# This is here as a fix for new versions of the libraries like Mavlink and dronekit
+# The version of dronekit used by my laptop does not understand the mode mapping of the blueROV
+# Somehow I found out that dronekit was not built for subs but for actual drones
+# And the mode mapping differs. Without this block of code that patches the Vehicle in dronekit
+# a lot of warning will be thrown by dronekit saying it does not understand the mode map number
+# that the sub is outputing. The code will not crash, but the warning are recursive and makes output unclear
 def always_true_mode_available(self, custom_mode, base_mode):
     return True
-
 Vehicle._is_mode_available = always_true_mode_available
-
 # Patch class-level mode mapping (not instance-level)
 Vehicle._mode_mapping_bynumber = {
     0: 'STABILIZE',
@@ -34,7 +40,9 @@ Vehicle._mode_mapping_bynumber = {
     19: 'MANUAL'
 }
 
+
 # === Only Specify which BlueROV to use ===
+# (I add a config file so we do not have to always check and change IP all the time)
 ROV_NAME = "bluerov2"  # Change this to match the blueROV
 config = get_config(ROV_NAME)
 
@@ -42,7 +50,14 @@ config = get_config(ROV_NAME)
 connection_string = f"{config['host_ip']}:{config['port']}"
 print(f"Connecting to vehicle on: {connection_string}")
 autopilot = connect(connection_string, wait_ready=False)
-# === Arm to move the robot ===
+
+# === There was an issue, where running the code doesnt move the motors ===
+# so we have to run the code severally before it will work
+# Prof. Felix is aware of it, so we found out that there are different modes of the sub
+# And occasionally, the sub swaps into stabilize mode. In this mode, the sub does not take 
+# any input to the motor so the motor will not move. It swaps into manual by itself, maybe a bug
+# but I am yet to find out
+# So this block of code forces the sub into manual.  
 autopilot.mode = VehicleMode("MANUAL")
 sleep(2)
 autopilot.armed = True
@@ -56,7 +71,7 @@ print("Altitude:", autopilot.location.global_relative_frame.alt)
 # Get some vehicle attributes (state)
 print (" Battery: %s" % autopilot.battery)
 
-# Arm to move the robot
+# Arm to move the robot, second time just to be sure, the sub is stubborn
 autopilot.armed=True
 sleep(5.0)
 print ("%s" % autopilot.armed)
@@ -66,7 +81,7 @@ print(autopilot.location.global_relative_frame.alt)
 Kp_depth = 100
 Ki_depth = 25
 Kd_depth = 0
-depth_setpoint = -0.5  # Desired depth (e.g., 1 meter)
+depth_setpoint = -0.5  
 dt = 0.1      # Time step in seconds
 
 # PID Constants for distance control
@@ -265,7 +280,7 @@ def rotate_search():
                     gii_bluerov.move_rov(autopilot, "z", "rotation", 0)  # Stop rotation
                     return yellow_center, yellow_area, current_distance
             sleep(0.1)
-
+# === Main search pattern: forward -> scan -> rotate, repeat ===
 def search_pattern():
     try:
         while True:
